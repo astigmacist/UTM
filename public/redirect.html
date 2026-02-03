@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Переадресация...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h2>Переадресация...</h2>
+        <p>Подождите немного</p>
+    </div>
+
+    <script>
+        // ===== НАСТРОЙКИ =====
+        // Укажите сюда вашу ссылку, куда нужно перенаправлять
+        const TARGET_URL = 'https://astanahub.com/'; // Astana Hub - технопарк
+        
+        // API endpoint (автоматически определяется)
+        const API_URL = window.location.origin + '/api/track';
+        
+        // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+        function getDeviceType() {
+            const ua = navigator.userAgent;
+            if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+                return '📱 Планшет';
+            }
+            if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+                return '📱 Телефон';
+            }
+            return '💻 Компьютер';
+        }
+        
+        function getBrowserInfo() {
+            const ua = navigator.userAgent;
+            let browser = 'Неизвестный';
+            
+            if (ua.indexOf('Firefox') > -1) browser = '🦊 Firefox';
+            else if (ua.indexOf('SamsungBrowser') > -1) browser = '📱 Samsung Browser';
+            else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) browser = '🎭 Opera';
+            else if (ua.indexOf('Trident') > -1) browser = '🌐 IE';
+            else if (ua.indexOf('Edge') > -1) browser = '🌀 Edge';
+            else if (ua.indexOf('Chrome') > -1) browser = '🌐 Chrome';
+            else if (ua.indexOf('Safari') > -1) browser = '🧭 Safari';
+            
+            return browser;
+        }
+        
+        function getOS() {
+            const ua = navigator.userAgent;
+            if (ua.indexOf('Win') > -1) return '🪟 Windows';
+            if (ua.indexOf('Mac') > -1) return '🍎 macOS';
+            if (ua.indexOf('Linux') > -1) return '🐧 Linux';
+            if (ua.indexOf('Android') > -1) return '🤖 Android';
+            if (ua.indexOf('iOS') > -1 || ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) return '📱 iOS';
+            return '❓ Неизвестная';
+        }
+        
+        // ===== КОД ТРЕКИНГА =====
+        async function trackClick() {
+            try {
+                // Собираем детальную информацию
+                const clickData = {
+                    // Источник
+                    referrer: document.referrer || 'Прямой переход',
+                    referrerDomain: document.referrer ? new URL(document.referrer).hostname : 'Нет',
+                    
+                    // Устройство и система
+                    device: getDeviceType(),
+                    browser: getBrowserInfo(),
+                    os: getOS(),
+                    
+                    // Технические данные
+                    screenResolution: `${screen.width}x${screen.height}`,
+                    windowSize: `${window.innerWidth}x${window.innerHeight}`,
+                    language: navigator.language || navigator.userLanguage,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    
+                    // Дополнительно
+                    onlineStatus: navigator.onLine ? '🟢 Онлайн' : '🔴 Оффлайн',
+                    cookiesEnabled: navigator.cookieEnabled ? '✅ Да' : '❌ Нет',
+                    
+                    // URL параметры (UTM метки)
+                    urlParams: window.location.search,
+                    
+                    // Полный User Agent (для детального анализа)
+                    userAgent: navigator.userAgent
+                };
+                
+                // Отправляем на сервер
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(clickData)
+                });
+                
+                const result = await response.json();
+                console.log('✅ Клик записан!', result);
+                
+            } catch (error) {
+                console.error('❌ Ошибка записи клика:', error);
+            }
+        }
+        
+        // Записываем клик
+        trackClick();
+        
+        // Перенаправляем через 1 секунду
+        setTimeout(() => {
+            window.location.href = TARGET_URL;
+        }, 1000);
+    </script>
+</body>
+</html>
