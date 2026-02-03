@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор отслеживаемых ссылок</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .generator-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus, input[type="url"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .hint {
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .result-card {
+            background: #e7f3ff;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .result-card.show {
+            display: block;
+        }
+        
+        .result-title {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+        
+        .result-link {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .result-link code {
+            color: #667eea;
+            font-size: 1em;
+            word-break: break-all;
+        }
+        
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-left: 10px;
+            white-space: nowrap;
+        }
+        
+        .copy-btn:hover {
+            background: #764ba2;
+        }
+        
+        .view-stats-btn {
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+        .view-stats-btn:hover {
+            background: #218838;
+        }
+        
+        .all-links-btn {
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            display: inline-block;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+        }
+        
+        .all-links-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .error {
+            background: #ffe0e0;
+            color: #c00;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        .center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 Генератор ссылок</h1>
+            <p class="subtitle">Создавайте отслеживаемые ссылки и получайте подробную аналитику</p>
+        </div>
+        
+        <div class="generator-card">
+            <h2 style="color: #333; margin-bottom: 25px;">Создать новую ссылку</h2>
+            
+            <form id="createLinkForm">
+                <div class="form-group">
+                    <label for="targetUrl">🎯 Целевая ссылка *</label>
+                    <input 
+                        type="url" 
+                        id="targetUrl" 
+                        placeholder="https://example.com" 
+                        required
+                    >
+                    <div class="hint">Введите полную ссылку, куда нужно перенаправлять людей</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customAlias">✏️ Псевдоним (необязательно)</label>
+                    <input 
+                        type="text" 
+                        id="customAlias" 
+                        placeholder="например: instagram-post"
+                    >
+                    <div class="hint">Оставьте пустым для автоматической генерации</div>
+                </div>
+                
+                <button type="submit" id="createBtn">🚀 Создать ссылку</button>
+            </form>
+            
+            <div id="error" class="error"></div>
+            
+            <div id="result" class="result-card">
+                <div class="result-title">✅ Ссылка создана!</div>
+                
+                <strong>Ваша короткая ссылка:</strong>
+                <div class="result-link">
+                    <code id="shortUrl"></code>
+                    <button class="copy-btn" onclick="copyShortUrl()">📋 Копировать</button>
+                </div>
+                
+                <strong>Статистика:</strong>
+                <div class="result-link">
+                    <code id="statsUrl"></code>
+                    <button class="copy-btn" onclick="copyStatsUrl()">📋 Копировать</button>
+                </div>
+                
+                <div class="center">
+                    <a id="viewStatsLink" href="#" class="view-stats-btn" target="_blank">
+                        📊 Открыть статистику
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="center">
+            <a href="/stats" class="all-links-btn">
+                📋 Посмотреть все мои ссылки
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('createLinkForm');
+        const resultDiv = document.getElementById('result');
+        const errorDiv = document.getElementById('error');
+        const createBtn = document.getElementById('createBtn');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const targetUrl = document.getElementById('targetUrl').value;
+            const customAlias = document.getElementById('customAlias').value;
+            
+            // Скрыть предыдущие результаты
+            resultDiv.classList.remove('show');
+            errorDiv.classList.remove('show');
+            createBtn.disabled = true;
+            createBtn.textContent = '⏳ Создание...';
+            
+            try {
+                const response = await fetch('/api/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ targetUrl, customAlias })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('shortUrl').textContent = data.shortUrl;
+                    document.getElementById('statsUrl').textContent = data.statsUrl;
+                    document.getElementById('viewStatsLink').href = data.statsUrl;
+                    resultDiv.classList.add('show');
+                    
+                    // Очистить форму
+                    form.reset();
+                } else {
+                    errorDiv.textContent = '❌ ' + data.error;
+                    errorDiv.classList.add('show');
+                }
+            } catch (error) {
+                errorDiv.textContent = '❌ Ошибка при создании ссылки';
+                errorDiv.classList.add('show');
+            } finally {
+                createBtn.disabled = false;
+                createBtn.textContent = '🚀 Создать ссылку';
+            }
+        });
+        
+        function copyShortUrl() {
+            const text = document.getElementById('shortUrl').textContent;
+            navigator.clipboard.writeText(text);
+            alert('✅ Ссылка скопирована!');
+        }
+        
+        function copyStatsUrl() {
+            const text = document.getElementById('statsUrl').textContent;
+            navigator.clipboard.writeText(text);
+            alert('✅ Ссылка на статистику скопирована!');
+        }
+    </script>
+</body>
+</html>
